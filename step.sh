@@ -52,11 +52,11 @@ invocation_raw=$(curl -s --request GET --url "https://flare-bes.services.bitrise
 
 options=$(echo "$invocation_raw" | jq '.Started.OptionsDescription' -r)
 options=$(echo "${options//"'''"/\"}")
-redacted_options=$(redact_secrets "${options}" "${secretslist}")
+redacted_options=$(redact_secrets "${options}" "${secrets}")
 
 ext_flags=$(echo "$invocation_raw" | jq '.CommandLine | map(.Options) | map(select(.)) | map(.[]) | map("--\(.Name)=\(.Value|tostring)")|.[]' -r)
 ext_flags=$(split "$ext_flags" " ")
-redacted_ext_flags=$(redact_secrets "${ext_flags}" "${secretslist}")
+redacted_ext_flags=$(redact_secrets "${ext_flags}" "${secrets}")
 
 command=$(echo "$invocation_raw" | jq '.Started.Command' -r)
 

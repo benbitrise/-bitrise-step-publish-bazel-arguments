@@ -5,6 +5,10 @@ Given an invocation id, fetches from Bitrise's BES endpoint the invocation optio
 
 ## How to use this Step
 
+### Step Specific Info
+> **Important**: In order for this step to work properly, add the following to your bazelrc `build --invocation_id=\$BITRISE_BUILD_SLUG`
+
+### Generic Step Info
 Can be run directly with the [bitrise CLI](https://github.com/bitrise-io/bitrise),
 just `git clone` this repository, `cd` into it's folder in your Terminal/Command Line
 and call `bitrise run test`.

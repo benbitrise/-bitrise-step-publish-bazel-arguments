@@ -9,7 +9,7 @@ split() {
 
 # Gather all secrets for redaction from BES info
 
-all_secrets=$(curl -X "GET" \
+all_secrets=$(curl -s -X "GET" \
   "https://api.bitrise.io/v0.1/apps/${BITRISE_APP_SLUG}/secrets" \
   -H "accept: application/json" \
   -H "Authorization: ${bitrise_access_token}")
@@ -19,9 +19,7 @@ secrets=()
 
 # Iterate over each item
 for key in "${secret_keys[@]}"; do
-    echo "NOW FOR ${key}"
-
-    secret_value=$(curl -X "GET" \
+    secret_value=$(curl -s -X "GET" \
     "https://api.bitrise.io/v0.1/apps/${BITRISE_APP_SLUG}/secrets/${key}/value" \
     -H "accept: application/json" \
     -H "Authorization: ${bitrise_access_token}" | jq -r ".value")
@@ -50,15 +48,15 @@ export BITRISEIO_BUILD_ANNOTATIONS_SERVICE_URL=https://build-annotations.service
 
 # Get BES info
 
-invocation_raw=$(curl --request GET --url "https://flare-bes.services.bitrise.io:443/invocations/${BITRISE_BUILD_SLUG}" --header "authorization: Bearer ${BITRISEIO_BITRISE_SERVICES_ACCESS_TOKEN}")
+invocation_raw=$(curl -s --request GET --url "https://flare-bes.services.bitrise.io:443/invocations/${BITRISE_BUILD_SLUG}" --header "authorization: Bearer ${BITRISEIO_BITRISE_SERVICES_ACCESS_TOKEN}")
 
 options=$(echo "$invocation_raw" | jq '.Started.OptionsDescription' -r)
 options=$(echo "${options//"'''"/\"}")
-redacted_options=$(redact_secrets "$options" "${secretslist}")
+redacted_options=$(redact_secrets "${options}" "${secretslist}")
 
 ext_flags=$(echo "$invocation_raw" | jq '.CommandLine | map(.Options) | map(select(.)) | map(.[]) | map("--\(.Name)=\(.Value|tostring)")|.[]' -r)
 ext_flags=$(split "$ext_flags" " ")
-redacted_ext_flags=$(redact_secrets "$ext_flags" "${secretslist}")
+redacted_ext_flags=$(redact_secrets "${ext_flags}" "${secretslist}")
 
 command=$(echo "$invocation_raw" | jq '.Started.Command' -r)
 

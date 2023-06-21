@@ -1,22 +1,81 @@
 #!/bin/bash
-set -ex
+set -e
 
-echo "This is the value specified for the input 'example_step_input': ${example_step_input}"
+split() {
+   # Usage: split "string" "delimiter"
+   IFS=$'\n' read -d "" -ra arr <<< "${1//$2/$'\n'}"
+   printf '%s\n' "${arr[@]}"
+}
 
-#
-# --- Export Environment Variables for other Steps:
-# You can export Environment Variables for other Steps with
-#  envman, which is automatically installed by `bitrise setup`.
-# A very simple example:
-envman add --key EXAMPLE_STEP_OUTPUT --value 'the value you want to share'
-# Envman can handle piped inputs, which is useful if the text you want to
-# share is complex and you don't want to deal with proper bash escaping:
-#  cat file_with_complex_input | envman add --KEY EXAMPLE_STEP_OUTPUT
-# You can find more usage examples on envman's GitHub page
-#  at: https://github.com/bitrise-io/envman
+# Gather all secrets for redaction from BES info
 
-#
-# --- Exit codes:
-# The exit code of your Step is very important. If you return
-#  with a 0 exit code `bitrise` will register your Step as "successful".
-# Any non zero exit code will be registered as "failed" by `bitrise`.
+all_secrets=$(curl -X "GET" \
+  "https://api.bitrise.io/v0.1/apps/${BITRISE_APP_SLUG}/secrets" \
+  -H "accept: application/json" \
+  -H "Authorization: ${bitrise_access_token}")
+
+secret_keys=($(echo $all_secrets | jq ".secrets | [.[] | .name]" | jq -r '.[]'))
+secrets=()
+
+# Iterate over each item
+for key in "${secret_keys[@]}"; do
+    echo "NOW FOR ${key}"
+
+    secret_value=$(curl -X "GET" \
+    "https://api.bitrise.io/v0.1/apps/${BITRISE_APP_SLUG}/secrets/${key}/value" \
+    -H "accept: application/json" \
+    -H "Authorization: ${bitrise_access_token}" | jq -r ".value")
+
+    # Add result to the results array
+    secrets+=($secret_value)
+done
+
+# Clean up raw info
+
+redact_secrets() {
+  local info="$1"
+  local -a secrets=("${@:2}")
+
+  for secret in "${secrets[@]}"; do
+    info=$(sed "s/${secret}/[REDACTED]/g" <<< "$info")
+  done
+
+  echo "$info"
+}
+
+# Setup annotations plugin to publish BES info
+
+bitrise plugin install https://github.com/bitrise-io/bitrise-plugins-annotations.git
+export BITRISEIO_BUILD_ANNOTATIONS_SERVICE_URL=https://build-annotations.services.bitrise.io
+
+# Get BES info
+
+invocation_raw=$(curl --request GET --url "https://flare-bes.services.bitrise.io:443/invocations/${BITRISE_BUILD_SLUG}" --header "authorization: Bearer ${BITRISEIO_BITRISE_SERVICES_ACCESS_TOKEN}")
+
+options=$(echo "$invocation_raw" | jq '.Started.OptionsDescription' -r)
+options=$(echo "${options//"'''"/\"}")
+redacted_options=$(redact_secrets "$options" "${secretslist}")
+
+ext_flags=$(echo "$invocation_raw" | jq '.CommandLine | map(.Options) | map(select(.)) | map(.[]) | map("--\(.Name)=\(.Value|tostring)")|.[]' -r)
+ext_flags=$(split "$ext_flags" " ")
+redacted_ext_flags=$(redact_secrets "$ext_flags" "${secretslist}")
+
+command=$(echo "$invocation_raw" | jq '.Started.Command' -r)
+
+# Print redacted BES info to Annotation
+
+MD=$(cat <<-END
+## Bazel Command
+~~~
+bazel $command $(echo $redacted_options | fold -w 100 -s)
+~~~
+
+## Extended Flags
+~~~
+$redacted_ext_flags
+~~~
+END
+
+)
+
+echo "$MD" | bitrise :annotations annotate -s info

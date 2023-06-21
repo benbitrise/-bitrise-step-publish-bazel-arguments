@@ -67,24 +67,22 @@ toolkit:
 
 
 inputs:
-  - example_step_input: Default Value - you can leave this empty if you want to
+  - bitrise_access_token:
     opts:
-      title: "Example Step Input"
-      summary: Summary. No more than 2-3 sentences.
+      title: "Bitrise Access Token"
+      summary: Bitrise PAT for interacting with REST API
       description: |
-        Description of this input.
-
-        Can be Markdown formatted text.
+        Use an access token created using the [devcenter instructions](https://devcenter.bitrise.io/en/accounts/personal-access-tokens.html#creating-a-personal-access-token)
       is_expand: true
       is_required: true
-      value_options: []
+      is_sensitive: true
 
-outputs:
-  - EXAMPLE_STEP_OUTPUT:
-    opts:
-      title: "Example Step Output"
-      summary: Summary. No more than 2-3 sentences.
-      description: |
-        Description of this output.
+# outputs:
+#   - EXAMPLE_STEP_OUTPUT:
+#     opts:
+#       title: "Example Step Output"
+#       summary: Summary. No more than 2-3 sentences.
+#       description: |
+#         Description of this output.
 
-        Can be Markdown formatted text.
+#         Can be Markdown formatted text.

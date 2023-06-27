@@ -35,7 +35,10 @@ redact_secrets() {
   local -a secrets=("${@:2}")
 
   for secret in "${secrets[@]}"; do
-    info=$(sed "s/${secret}/[REDACTED]/g" <<< "$info")
+    info=$(sed "s|${secret}|[REDACTED]|g" <<< "$info") 2>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "A secret redaction failed on the sed command."
+    fi
   done
 
   echo "$info"

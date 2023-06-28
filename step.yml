@@ -76,6 +76,14 @@ inputs:
       is_expand: true
       is_required: true
       is_sensitive: true
+  - invocation_id: $BITRISE_BUILD_SLUG
+    opts:
+      title: "Invocation ID"
+      summary: The identifier within BES to lookup Bazel build information.
+      description: |
+        This will typically be the Bitrise Build Slug, but you can override it
+      is_expand: true
+      is_required: true
 
 # outputs:
 #   - EXAMPLE_STEP_OUTPUT:

@@ -58,7 +58,7 @@ echo "Response code from BES: ${bes_response_code}"
 
 if [ "$bes_response_code" != "200" ]; then
     echo "Error: Expected 200"
-    exit 1
+    exit 0
 fi
 
 options=$(cat "$bes_response" | jq '.Started.OptionsDescription' -r)

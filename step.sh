@@ -51,17 +51,25 @@ export BITRISEIO_BUILD_ANNOTATIONS_SERVICE_URL=https://build-annotations.service
 
 # Get BES info
 
-invocation_raw=$(curl -s --request GET --url "https://flare-bes.services.bitrise.io:443/invocations/${BITRISE_BUILD_SLUG}" --header "authorization: Bearer ${BITRISEIO_BITRISE_SERVICES_ACCESS_TOKEN}")
+bes_response=$(mktemp)
+bes_response_code=$(curl -s -o "${bes_response}" -w "%{http_code}" --request GET --url "https://flare-bes.services.bitrise.io:443/invocations/${BITRISE_BUILD_SLUG}" --header "authorization: Bearer ${BITRISEIO_BITRISE_SERVICES_ACCESS_TOKEN}")
 
-options=$(echo "$invocation_raw" | jq '.Started.OptionsDescription' -r)
+echo "Response code from BES: ${bes_response_code}
+
+if [ "$response_code" != "200" ]; then
+    echo "Error: Expected 200"
+    exit 1
+fi
+
+options=$(cat "$bes_response" | jq '.Started.OptionsDescription' -r)
 options=$(echo "${options//"'''"/\"}")
 redacted_options=$(redact_secrets "${options}" "${secrets}")
 
-ext_flags=$(echo "$invocation_raw" | jq '.CommandLine | map(.Options) | map(select(.)) | map(.[]) | map("--\(.Name)=\(.Value|tostring)")|.[]' -r)
+ext_flags=$(cat "$bes_response" | jq '.CommandLine | map(.Options) | map(select(.)) | map(.[]) | map("--\(.Name)=\(.Value|tostring)")|.[]' -r)
 ext_flags=$(split "$ext_flags" " ")
 redacted_ext_flags=$(redact_secrets "${ext_flags}" "${secrets}")
 
-command=$(echo "$invocation_raw" | jq '.Started.Command' -r)
+command=$(cat "$bes_response" | jq '.Started.Command' -r)
 
 # Print redacted BES info to Annotation
 

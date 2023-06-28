@@ -52,7 +52,7 @@ export BITRISEIO_BUILD_ANNOTATIONS_SERVICE_URL=https://build-annotations.service
 # Get BES info
 
 bes_response=$(mktemp)
-bes_response_code=$(curl -s -o "${bes_response}" -w "%${http_code}" --request GET --url "https://flare-bes.services.bitrise.io:443/invocations/${BITRISE_BUILD_SLUG}" --header "authorization: Bearer ${BITRISEIO_BITRISE_SERVICES_ACCESS_TOKEN}")
+bes_response_code=$(curl -s -o "${bes_response}" -w "%{http_code}" --request GET --url "https://flare-bes.services.bitrise.io:443/invocations/${BITRISE_BUILD_SLUG}" --header "authorization: Bearer ${BITRISEIO_BITRISE_SERVICES_ACCESS_TOKEN}")
 
 echo "Response code from BES: ${bes_response_code}"
 

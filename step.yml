@@ -84,7 +84,6 @@ inputs:
         This will typically be the Bitrise Build Slug, but you can override it
       is_expand: true
       is_required: true
-      is_sensitive: true
 
 # outputs:
 #   - EXAMPLE_STEP_OUTPUT:

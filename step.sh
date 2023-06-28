@@ -56,7 +56,7 @@ bes_response_code=$(curl -s -o "${bes_response}" -w "%{http_code}" --request GET
 
 echo "Response code from BES: ${bes_response_code}"
 
-if [ "$response_code" != "200" ]; then
+if [ "$bes_response_code" != "200" ]; then
     echo "Error: Expected 200"
     exit 1
 fi
